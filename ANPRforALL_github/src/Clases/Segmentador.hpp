@@ -45,9 +45,11 @@ public:
 
 	Mat imagBinariaSegX;
 
+	Mat imagGrisRotadaSegmY;
 
 	Mat imagBordes;
 	Mat imagBordesHough;
+	Mat imagBordesRotada0;
 	Mat imagBordesRotada;
 	Mat imagBordesRotada2;
 

@@ -8,24 +8,33 @@ Reconocedor::~Reconocedor(){
 }
 
 
-String Reconocedor::ejecutar(Mat imgEntrada){
-	imwrite("Imagenes/imgPatente.png",imgEntrada);
+String Reconocedor::ejecutar(Mat imagenEntrada){
+
+	if(!imagenEntrada.data){
+		return("Error, no hay imagen segmentada");
+	}
+
+	imagenEntrada.copyTo(this->imagenEntrada);
+	imwrite("imgPatente.jpg",imagenEntrada);
 	//imwrite(direccionSalidas+"/"+s+ "_sec_busqueda.png",img_orig_busqueda_salida);
-	system("tesseract Imagenes/imgPatente.png out -psm 7 -l lgf");
+	system("tesseract imgPatente.jpg out -psm 7 -l lgf");
 
 	ifstream ficheroEntrada;
-	string numeracionPatente;
 
 	ficheroEntrada.open ("out.txt");
-	getline(ficheroEntrada, numeracionPatente);
+	getline(ficheroEntrada, this->numeracion);
 	ficheroEntrada.close();
 
-	cvtColor(imgEntrada,imgEntrada,CV_GRAY2BGR);
-	cv::putText(imgEntrada,numeracionPatente, Point(ceil(imgEntrada.cols/2)-10, 15),
-								FONT_HERSHEY_DUPLEX, 0.7, Scalar(0,0,255), 1, 0.5);
-
-	imshow("patenteSeg",imgEntrada);
+	return(numeracion);
+}
 
 
-	return("dasdas");
+void Reconocedor::mostrar_pasos(){
+	Mat aux2(imagenEntrada.rows*1.5, imagenEntrada.cols,imagenEntrada.type(),Scalar(0,0,0));
+	imagenEntrada.copyTo(aux2(Rect(0,0,imagenEntrada.cols,imagenEntrada.rows)));
+
+	cvtColor(aux2,aux2,CV_GRAY2BGR);
+	cv::putText(aux2,numeracion, Point(ceil(2*aux2.cols/18), aux2.rows-10),FONT_HERSHEY_DUPLEX, 0.5, Scalar(0,255,0), 1, 0.1);
+
+	imshow("Resultado OCR",aux2);
 }

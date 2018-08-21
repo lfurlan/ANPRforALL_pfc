@@ -4,7 +4,12 @@
 bool clicled=false;
 inicio_fin patenteIndicada;
 Mat img_orig1, img_orig_mostrada;
-int ind_mayor_altoGLOBAL1,ind_mayor_altoGLOBAL2;
+int ind_mayor_altoGLOBAL1,ind_mayor_altoGLOBAL2, umbralTipoPatente;
+int contRota=0;
+int iInicial;
+int iFinal;
+int anchoMinimo;
+
 
 Mat busquedaPorContornos2(Mat imagMod){
 	Mat imagAux;
@@ -45,6 +50,7 @@ Mat busquedaPorContornos2(Mat imagMod){
 
 Segmentador::Segmentador(){
 	paso=0;
+	contRota=0;
 	resultados.codError.error=0;	//-1: procedimiento no finalizado   0: sin error   1: imagen de entrada sin datos
 									//2: error al redimensionar  3: error al hacer Hough  4:no es una patente
 									//5: error al segmentar en Y (sin Franjas HOrizontales Candidatos)
@@ -65,6 +71,7 @@ Segmentador::~Segmentador(){
 
 codigoError Segmentador::ejecutar(Mat imagenEntrada){
 	paso=0;
+	contRota=0;
 	resultados.Caracteres.clear();
 	resultados.codError.error=0;
 	resultados.codError.tipoPatente=-1; //-1: Indefinido    0: Patente Vieja   1: Patente Nueva
@@ -106,48 +113,48 @@ Mat Segmentador::sacarImagen(){
 	Mat result;
 
 	resultados.imagSegmentada.copyTo(result);
-
-
-	Scalar sc= Scalar(255,0,0);
-	cvtColor(resultados.imagSegmentada, resultados.imagSegmentada, CV_GRAY2BGR);
-	for(int i=0;i<resultados.Caracteres.size();i++){
-		switch (i) {
-		case 0:
-		case 1:
-		case 5:
-		case 6:
-			sc= Scalar(0,0,0);
-			//rectangle(resultados.imagSegmentada, resultados.Caracteres[i].inicio,resultados.Caracteres[i].fin,sc,-1,4,0);
-			break;
-		case 2:
-		case 3:
-		case 4:
-			sc= Scalar(0,0,0);
-
-			break;
-		}
-	}
-
-	cvtColor(resultados.imagSegmentada, resultados.imagSegmentada, CV_BGR2GRAY);
-	resultados.imagSegmentada.copyTo(result);
-	Mat result2(result.rows*1.5, result.cols,result.type(),Scalar(0,0,0));
-	result.copyTo(result2(Rect(0,0,result.cols,result.rows)));
-
 //
 //
-	imwrite("Imagenes/imgPatente.png",result2);
-	system("tesseract Imagenes/imgPatente.png out -psm 7 -l lgf");
-
-
-	ifstream ficheroEntrada;
-	string numeracionPatente;
-
-	ficheroEntrada.open ("out.txt");
-	getline(ficheroEntrada, numeracionPatente);
-	ficheroEntrada.close();
-	cvtColor(result2,result2,CV_GRAY2BGR);
-	cv::putText(result2,numeracionPatente, Point(ceil(6*result2.cols/18), result2.rows-10),
-									FONT_HERSHEY_DUPLEX, 0.7, Scalar(0,0,255), 1, 0.5);
+//	Scalar sc= Scalar(255,0,0);
+//	cvtColor(resultados.imagSegmentada, resultados.imagSegmentada, CV_GRAY2BGR);
+//	for(int i=0;i<resultados.Caracteres.size();i++){
+//		switch (i) {
+//		case 0:
+//		case 1:
+//		case 5:
+//		case 6:
+//			sc= Scalar(0,0,0);
+//			//rectangle(resultados.imagSegmentada, resultados.Caracteres[i].inicio,resultados.Caracteres[i].fin,sc,-1,4,0);
+//			break;
+//		case 2:
+//		case 3:
+//		case 4:
+//			sc= Scalar(0,0,0);
+//
+//			break;
+//		}
+//	}
+//
+//	cvtColor(resultados.imagSegmentada, resultados.imagSegmentada, CV_BGR2GRAY);
+//	resultados.imagSegmentada.copyTo(result);
+//	Mat result2(result.rows*1.5, result.cols,result.type(),Scalar(0,0,0));
+//	result.copyTo(result2(Rect(0,0,result.cols,result.rows)));
+//
+////
+////
+////	imwrite("Imagenes/imgPatente.png",result2);
+////	system("tesseract Imagenes/imgPatente.png out -psm 7 -l lgf");
+//
+//
+//	ifstream ficheroEntrada;
+//	string numeracionPatente;
+//
+//	ficheroEntrada.open ("out.txt");
+//	getline(ficheroEntrada, numeracionPatente);
+//	ficheroEntrada.close();
+//	cvtColor(result2,result2,CV_GRAY2BGR);
+//	cv::putText(result2,numeracionPatente, Point(ceil(6*result2.cols/18), result2.rows-10),
+//									FONT_HERSHEY_DUPLEX, 0.7, Scalar(0,0,255), 1, 0.5);
 
 	//imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/PatenteSegmentadaReconocidosEjemplo4.jpg", result2);
 
@@ -173,192 +180,165 @@ void Segmentador::mostrar_pasos(){
 //
 ////	/*----------------IMAGEN BORDES SEGMENTACION Y------*/
 	int alto_imagen=150;
-	int x=600;
+	int x=0;
 	int y=0;
 	Mat concatenada;
-	if(paso>0){
-		//concatenada=resultados.imagPatOrig;
-		imshow("imagPatOrig", resultados.imagPatOrig);
-		moveWindow("imagPatOrig", x, y);
-		y+=resultados.imagPatOrig.rows+40;
-	} else return;
 
-	if(paso>1){
-		//concatenada=concatenar_Mat_H(concatenada,resultados.imagBordes,alto_imagen);
-		imshow("imagBordes", resultados.imagBordes);
-		moveWindow("imagBordes", x, y);
-		y+=resultados.imagBordes.rows+40;
-	}
+	//IMAGEN ENTRADA
+	imshow("SegmImagenEntrada", resultados.imagPatEscalada);
+	moveWindow("SegmImagenEntrada", x, y);
+	y+=resultados.imagPatOrig.rows+40;
 
-	if(paso>2){
-			Mat aux;
+	//BORDES IMAGEN ENTRADA
+	imshow("SegmBordes", resultados.imagBordes);
+	moveWindow("SegmBordes", x, y);
+	y+=resultados.imagBordes.rows+40;
 
+	//BORDES HOUGH
+	imshow("SegmHough", resultados.imagBordesHough);
+	moveWindow("SegmHough", x, y);
+	y+=resultados.imagBordesHough.rows+40;
 
-			//concatenada=concatenar_Mat_H(concatenada,resultados.imagBordesHough,alto_imagen);
-			imshow("imagBordesHough", resultados.imagBordesHough);
-			imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/CambioPerspectiva1.jpg",resultados.imagBordesHough);
-			moveWindow("imagBordesHough", x, y);
-			y+=resultados.imagBordesHough.rows+40;
+	//BORDES ROTADA
+	imshow("SegmHoughRotacion", resultados.imagBordesRotada0);
+	moveWindow("SegmHoughRotacion", x, y);
+	y+=resultados.imagBordesRotada0.rows+40;
 
-
-			resultados.imagBordesRotada.copyTo(aux);
-				cvtColor(aux, aux, CV_GRAY2BGR);
-
-			imshow("Corrección de perspectiva", aux);
-			imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/CambioPerspectiva2.jpg",aux);
-
-			moveWindow("Corrección de perspectiva", x, y);
-			y+=resultados.imagBordesHough.rows+40;
-
-			Point puntos_proy_y[1][aux.rows];
-			for (int j = 0; j < aux.rows; j++) {
-					puntos_proy_y[0][j] = Point(resultados.ProyeccionY_patente.at<float>(0, j), j);
-				}
-			const Point* ppy[1] = { puntos_proy_y[0] };
-			int npy[] = { aux.rows };
-			polylines(aux, ppy, npy, 1, false, Scalar(0, 0, 255), 1);
+	//BORDES CORRECCION INCLINACION
+	imshow("SegmHoughInclinacion", resultados.imagBordesRotada);
+	moveWindow("SegmHoughInclinacion", x, y);
+	y=40;
+	x+=resultados.imagBordesRotada0.cols+40;
 
 
-			Rect r(resultados.pCandidatosY_patente[ind_mayor_altoGLOBAL1].inicio.x,
-							resultados.pCandidatosY_patente[ind_mayor_altoGLOBAL1].inicio.y,
-							resultados.imagBordesRotada.cols,
-							resultados.pCandidatosY_patente[ind_mayor_altoGLOBAL1].fin.y-resultados.pCandidatosY_patente[ind_mayor_altoGLOBAL1].inicio.y);
-			rectangle(aux, r,Scalar(255,0,0),1,8,0);
+	//BORDES EJES PARA CORRECCION INCLINACION
+	imshow("SegmHoughInclinacion2", resultados.imagBordesRotada2);
+	moveWindow("SegmHoughInclinacion2", x, y);
+	y+=resultados.imagBordesRotada2.rows+40;
 
-
-
-
-
-
-			imshow("Proyección Y", aux);
-			imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/SegmentacionYPaso1.jpg",aux);
-
-
-			Mat aux2;
-			resultados.imagBinariaRotada.copyTo(aux2);
-			cvtColor(aux2, aux2, CV_GRAY2BGR);
-
-			Point puntos_proy_y2[1][aux2.rows];
-			for (int j = 0; j < aux2.rows; j++) {
-				puntos_proy_y2[0][j] = Point(resultados.ProyeccionY_patente2.at<float>(0, j), j);
-			}
-			const Point* ppy2[1] = { puntos_proy_y2[0] };
-			int npy2[] = { aux2.rows };
-			polylines(aux2, ppy2, npy2, 1, false, Scalar(0, 0, 255), 1);
-
-			Rect r2(resultados.pCandidatosY_patente2[ind_mayor_altoGLOBAL2].inicio.x,
-							resultados.pCandidatosY_patente2[ind_mayor_altoGLOBAL2].inicio.y,
-							resultados.imagBordesRotada.cols,
-							resultados.pCandidatosY_patente2[ind_mayor_altoGLOBAL2].fin.y-resultados.pCandidatosY_patente2[ind_mayor_altoGLOBAL2].inicio.y);
-			rectangle(aux2, r2,Scalar(255,0,0),1,8,0);
-
-			imshow("Proyeccion Y2", aux2);
-			imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/SegmentacionYPaso2.jpg",aux2);
-			imshow("Proyeccion Y3", resultados.imagBinariaRotadaSegY);
-			imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/SegmentacionYPaso3.jpg",resultados.imagBinariaRotadaSegY);
-			//resultados.imagBinariaRotada(r).copyTo(resultados.imagBinariaRotadaSegY);
-
-
-	}
-
-	if(paso>3){
-			Mat aux;
-			resultados.imagBordesRotadaSegY.copyTo(aux);
-			cvtColor(aux, aux, CV_GRAY2BGR);
-			Point puntos_proy_pat_x[aux.cols][1];
-			for (int i = 0; i < aux.cols; i++) {
-				puntos_proy_pat_x[0][i] = Point(i, resultados.ProyeccionX_patente_compPatente.at<float>(0, i));
-			}
-			const Point* pppx[1] = { puntos_proy_pat_x[0] };
-			int nppx[] = { aux.cols };
-			polylines(aux, pppx, nppx, 1, false, Scalar(0, 0, 255), 1);
-			cout<<"resultados.umbralProyXpat: "<<resultados.umbralProyXpat<<endl;
-			line(aux, Point(0, resultados.umbralProyXpat), Point(aux.cols,resultados.umbralProyXpat),Scalar(0, 255, 0), 1);
-
-			int iInicial=ceil((float)(resultados.ProyeccionX_patente.cols*3/8));
-			int iFinal=ceil((float)(resultados.ProyeccionX_patente.cols*5/8));
-			int anchoMinimo=ceil((float)(resultados.ProyeccionX_patente.cols/12));
-			rectangle(aux, Rect(Point(iInicial,0),Point(iFinal,aux.rows)),Scalar(255,0,0),2,8,0);
-
-			Mat aux2(aux.rows*1.5, aux.cols,aux.type(),Scalar(0,0,0));
-			aux.copyTo(aux2(Rect(0,0,aux.cols,aux.rows)));
-
-
-			//resize(aux, aux, Size(((float)aux.cols/aux.rows)*alto_imagen, alto_imagen), 0, 0, INTER_CUBIC);
-			string numeracionPatente;
-			switch (resultados.codError.tipoPatente) {
-					case 0:			//patente vieja
-						numeracionPatente="Patente Argentina";
-						break;
-					case 1:			//patente nueva
-						numeracionPatente="Patente Mercosur";
-						break;
-					default:		//patente indefinida -->corto proceso
-						break;
-				}
-
-			cv::putText(aux2,numeracionPatente, Point(ceil(2*aux2.cols/18), aux2.rows-10),
-											FONT_HERSHEY_DUPLEX, 0.5, Scalar(255,0,0), 1, 0.1);
-
-
-			imshow("TipoDePatente", aux2);
-			imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/TipoDePatente.jpg",aux2);
-			moveWindow("TipoDePatente", x, y);
-			y+=resultados.imagBordesRotadaSegY.rows+40;
-
-			//concatenada=concatenar_Mat_H(concatenada,aux,alto_imagen);
-			//imshow("Determinacion Patente",concatenada);
-			//moveWindow("Determinacion Patente", 0, 0);
-		//
-	}
-	if(paso>4){
-			x=600+resultados.imagBordesRotadaSegY.cols+40;
-			y=0;
-
-//			imshow("imagBinaria", resultados.imagBinaria);
-//			moveWindow("imagBinaria", x, y);
-//			y+=resultados.imagBinaria.rows+40;
-
-//			imshow("imagBinariaRotada", resultados.imagBinariaRotada);
-//			moveWindow("imagBinariaRotada", x, y);
-//			y+=resultados.imagBinariaRotada.rows+40;
-
-			Mat aux;
-			resultados.imagBinariaRotadaSegY.copyTo(aux);
-			cvtColor(aux, aux, CV_GRAY2BGR);
-			Point puntos_proy_pat_x1[aux.cols][1];
-			for (int i = 0; i < aux.cols; i++) {
-				puntos_proy_pat_x1[0][i] = Point(i, resultados.ProyeccionX_patente.at<float>(0, i));
-			}
-			const Point* pppx1[1] = { puntos_proy_pat_x1[0] };
-			int nppx1[] = { aux.cols };
-			polylines(aux, pppx1, nppx1, 1, false, Scalar(0, 0, 255), 1);
-			line(aux, Point(0, resultados.umbralProyXpat), Point(aux.cols,resultados.umbralProyXpat),Scalar(0, 255, 0), 1);
-			imshow("Segunda Segmentacion Y", aux);
-			moveWindow("imagBinariaRotadaSegY", x, y);
-			y+=resultados.imagBordesRotadaSegY.rows+40;
-
-			//imshow("Segunda Segmentacion Y", resultados.imagBinariaRotadaSegX);
-			//imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/PatenteSegmentada.jpg", resultados.imagBinariaRotadaSegX);
-
-
-			moveWindow("imagBinariaRotadaSegX", x, y);
-			y+=resultados.imagBinariaRotadaSegX.rows+40;
-
-
-
-
-
-
-	}
-
-//
-//
-//
-
-//
-////	/*----------segmentacion binaria--------------------------------*/
+	//PROYECCION Y
 	Mat aux;
+	resultados.imagBordesRotada.copyTo(aux);
+	cvtColor(aux, aux, CV_GRAY2BGR);
+	Point puntos_proy_y[1][aux.rows];
+	for (int j = 0; j < aux.rows; j++) {
+		puntos_proy_y[0][j] = Point(resultados.ProyeccionY_patente.at<float>(0, j), j);
+	}
+	const Point* ppy[1] = { puntos_proy_y[0] };
+	int npy[] = { aux.rows };
+	polylines(aux, ppy, npy, 1, false, Scalar(255, 0, 0), 1);
+	imshow("SegmProyY", aux);
+	moveWindow("SegmProyY", x, y);
+	y+=aux.rows+40;
+
+
+
+	//SELECCION PROYECCION Y
+	line(aux, Point(resultados.umbralProyYpat2,0), Point(resultados.umbralProyYpat2,aux.rows),Scalar(0, 0, 255), 1);
+	Rect r(resultados.pCandidatosY_patente[ind_mayor_altoGLOBAL1].inicio.x,
+					resultados.pCandidatosY_patente[ind_mayor_altoGLOBAL1].inicio.y,
+					resultados.imagBordesRotada.cols,
+					resultados.pCandidatosY_patente[ind_mayor_altoGLOBAL1].fin.y-resultados.pCandidatosY_patente[ind_mayor_altoGLOBAL1].inicio.y);
+	rectangle(aux, r,Scalar(0,255,0),1,1,0);
+	imshow("SegmProyYSeleccion", aux);
+	moveWindow("SegmProyYSeleccion", x, y);
+	y+=aux.rows+40;
+
+
+	//SEGMENTACION Y
+	imshow("SegmSegY", resultados.imagBordesRotadaSegY);
+	moveWindow("SegmSegY", x, y);
+	y+=resultados.imagBordesRotadaSegY.rows+40;
+
+	//PROYECCION X Y DETERMINACION DE TIPO PATENTE
+
+	resultados.imagBordesRotadaSegY.copyTo(aux);
+	cvtColor(aux, aux, CV_GRAY2BGR);
+	Point puntos_proy_pat_x[aux.cols][1];
+	for (int i = 0; i < aux.cols; i++) {
+		puntos_proy_pat_x[0][i] = Point(i, resultados.ProyeccionX_patente_compPatente.at<float>(0, i));
+	}
+	const Point* pppx[1] = { puntos_proy_pat_x[0] };
+	int nppx[] = { aux.cols };
+	polylines(aux, pppx, nppx, 1, false, Scalar(255, 0, 0), 1);
+	cout<<"resultados.umbralProyXpat: "<<resultados.umbralProyXpat<<endl;
+	line(aux, Point(0, umbralTipoPatente), Point(aux.cols,umbralTipoPatente),Scalar(0, 0, 255), 1);
+
+
+	rectangle(aux, Rect(Point(iInicial,0),Point(iFinal,aux.rows)),Scalar(0,255,0),2,1,0);
+
+	Mat aux2(aux.rows*1.5, aux.cols,aux.type(),Scalar(0,0,0));
+	aux.copyTo(aux2(Rect(0,0,aux.cols,aux.rows)));
+
+
+	//resize(aux, aux, Size(((float)aux.cols/aux.rows)*alto_imagen, alto_imagen), 0, 0, INTER_CUBIC);
+	string numeracionPatente;
+	switch (resultados.codError.tipoPatente) {
+			case 0:			//patente vieja
+				numeracionPatente="Patente Argentina";
+				break;
+			case 1:			//patente nueva
+				numeracionPatente="Patente Mercosur";
+				break;
+			default:		//patente indefinida -->corto proceso
+				break;
+		}
+
+	cv::putText(aux2,numeracionPatente, Point(ceil(2*aux2.cols/18), aux2.rows-10),
+									FONT_HERSHEY_DUPLEX, 0.5, Scalar(0,255,0), 1, 0.1);
+
+
+	imshow("SegmSegYProyX", aux2);
+	moveWindow("SegmSegYProyX", x, y);
+	y=40;
+	x+=aux2.cols+40;
+
+
+
+	//PATENTE GRIS ROTADA Y SEGMENTADA EN Y
+
+	imshow("PatenteRotadaSegmY1",resultados.imagGrisRotadaSegmY);
+	moveWindow("PatenteRotadaSegmY1", x, y);
+	y+=resultados.imagGrisRotadaSegmY.rows+40;
+
+	//OPERACION MORFOLOGICA (TOP-HAT O BLACK-HAT)
+
+	imshow("imagBinariaRotadaSegY",resultados.imagBinariaRotada);
+	moveWindow("imagBinariaRotadaSegY", x, y);
+	y+=resultados.imagBinariaRotadaSegY.rows+40;
+
+
+	//PROYECCION Y SOBRE IMAGEN BINARIA
+
+	resultados.imagBinariaRotada.copyTo(aux2);
+	cvtColor(aux2, aux2, CV_GRAY2BGR);
+
+	Point puntos_proy_y2[1][aux2.rows];
+	for (int j = 0; j < aux2.rows; j++) {
+		puntos_proy_y2[0][j] = Point(resultados.ProyeccionY_patente2.at<float>(0, j), j);
+	}
+	const Point* ppy2[1] = { puntos_proy_y2[0] };
+	int npy2[] = { aux2.rows };
+	polylines(aux2, ppy2, npy2, 1, false, Scalar(255, 0, 0), 1);
+
+
+	Rect r2(resultados.pCandidatosY_patente2[ind_mayor_altoGLOBAL2].inicio.x,
+					resultados.pCandidatosY_patente2[ind_mayor_altoGLOBAL2].inicio.y,
+					resultados.imagBordesRotada.cols,
+					resultados.pCandidatosY_patente2[ind_mayor_altoGLOBAL2].fin.y-resultados.pCandidatosY_patente2[ind_mayor_altoGLOBAL2].inicio.y);
+	rectangle(aux2, r2,Scalar(0,255,0),1,1,0);
+	line(aux2, Point(resultados.umbralProyYpat2,0), Point(resultados.umbralProyYpat2,aux2.rows),Scalar(0, 0, 255), 1);
+
+	imshow("PatenteProyeccionY",aux2);
+	moveWindow("PatenteProyeccionY", x, y);
+	y+=resultados.imagBinariaRotada.rows+40;
+
+	//SEGMENTACION Y SOBRE IMAGEN BINARIA
+	imshow("SegmBinariaReSegmY", resultados.imagBinariaRotadaSegY);
+	moveWindow("SegmBinariaReSegmY", x, y);
+	y+=resultados.imagBinariaRotadaSegY.rows+40;
+
+	//PROYECCION X SOBRE IMAGEN BINARIA
 	resultados.imagBinariaRotadaSegY.copyTo(aux);
 	cvtColor(aux, aux, CV_GRAY2BGR);
 	Point puntos_proy_pat_x1[aux.cols][1];
@@ -367,40 +347,45 @@ void Segmentador::mostrar_pasos(){
 	}
 	const Point* pppx1[1] = { puntos_proy_pat_x1[0] };
 	int nppx1[] = { aux.cols };
-	polylines(aux, pppx1, nppx1, 1, false, Scalar(0, 0, 255), 1);
-	line(aux, Point(0, resultados.umbralProyXpat), Point(aux.cols,resultados.umbralProyXpat),Scalar(0, 255, 0), 1);
+	polylines(aux, pppx1, nppx1, 1, false, Scalar(255, 0, 0), 1);
+	line(aux, Point(0, resultados.umbralProyXpat), Point(aux.cols,resultados.umbralProyXpat),Scalar(0, 0, 255), 1);
 
+	imshow("SegmBinariaProyX", aux);
+	moveWindow("SegmBinariaProyX", x, y);
+	y+=aux.rows+40;
+
+
+	//SEGMENTACION X
+
+	Scalar sc= Scalar(255,0,0);
 	for(int i=0;i<resultados.Caracteres.size();i++){
-		rectangle(aux, resultados.Caracteres[i].inicio,resultados.Caracteres[i].fin,Scalar(255,0,0),1,4,0);
+		switch (i) {
+		case 0:
+		case 1:
+		case 5:
+		case 6:
+			sc= Scalar(0,255,0);
+			rectangle(aux, resultados.Caracteres[i].inicio,resultados.Caracteres[i].fin,sc,1,1,0);
+			break;
+		case 2:
+		case 3:
+		case 4:
+			sc= Scalar(0,255,0);
+			rectangle(aux, resultados.Caracteres[i].inicio,resultados.Caracteres[i].fin,sc,1,1,0);
+			break;
+		}
 	}
 
-	imshow("SegmentacionX",aux);
-	imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/SegmentacionX.jpg",aux);
+	imshow("SegmBinariaSegX", aux);
+	moveWindow("SegmBinariaSegX", x, y);
+	y+=aux.rows+40;
+
+	// CARACTERES SEGMENTADOS
+	imshow("caracteresSegmentada", resultados.imagSegmentada);
+	moveWindow("caracteresSegmentada", x, y);
+	y+=aux.rows+40;
 
 
-	imwrite("D:/DISCO E/Facultad/PROYECTO FINAL DE CARRERA/TRABAJO FINAL/ Corpus de Imagenes/TODO/Para mostrar/CaracteresSegmentados.jpg",resultados.imagSegmentada);
-	imshow("imagSegmentada",resultados.imagSegmentada);
-
-
-
-//		resultados.imagBinariaSegX.copyTo(aux);
-//		cvtColor(aux, aux, CV_GRAY2BGR);
-//
-//		for (int i = 0; i < aux.cols; i++) {
-//			puntos_proy_pat_x[0][i] = Point(i, resultados.ProyeccionX_patente_Seg.at<float>(0, i));
-//		}
-////
-//		polylines(aux, pppx, nppx, 1, false, Scalar(0, 0, 255), 2);
-
-
-
-
-//	Mat imagPatOrigGris;
-//	Mat imagPatEscalada;
-//	Mat imagProyY;
-//	Mat imagProyX;
-//	Mat imagPatMod;
-//	Mat imagPatAux;
 }
 
 
@@ -539,6 +524,8 @@ Mat Segmentador::cambio_angulo(Mat imagen) {
 		Mat rot_mat = getRotationMatrix2D(src_center, (float)resultados.mejorpromedioHor.promedio, 1.0);
 		warpAffine(aux, aux, rot_mat, imagen.size());
 		//cout<<"roto imagen: "<<(float)resultados.mejorpromedioHor.promedio<<endl;
+		if(contRota==0)aux.copyTo(resultados.imagBordesRotada0);
+
 	//}
 	/*---------CORRECCION ANGULO LETRAS-----------*/
 	if(resultados.angulosVerticales.size()>0){
@@ -546,6 +533,7 @@ Mat Segmentador::cambio_angulo(Mat imagen) {
 		aux=warpPerspective(aux, dx);
 		//cout<<"cambio angulo letras: "<<resultados.anguloLetras+90<<endl;
 	}
+	contRota++;
 	return(aux);
 }
 
@@ -640,8 +628,7 @@ int Segmentador::segmentarCaracteres(){
 	resultados.imagPatAux=cambio_angulo(resultados.imagPatEscalada);
 	/*--------------SEGMENTACION Y HECHA POR BORDES------------------*/
 	resultados.imagPatAux(resultados.roiSegY).copyTo(resultados.imagPatAux);
-
-
+	resultados.imagGrisRotadaSegmY=resultados.imagPatAux;
 	/*------PASAR TOP-HAT o BLACK-HAT-------*/
 	Mat EE3 = getStructuringElement(CV_SHAPE_RECT, cv::Size(25, 25));
 	Mat EEHor1 = getStructuringElement(CV_SHAPE_RECT, cv::Size(ceil(resultados.imagPatAux.rows/2.5), 1));
@@ -1029,12 +1016,13 @@ int Segmentador::comprobar_proyeccionX(){//<--------------poner mas condiciones 
 	float puntaje=0;
 	resultados.codError.tipoPatente=1; //<------------reveer esto, chequear q si no es nueva, que sea vieja
 	resultados.umbralProyXpat =ceil((float)1.2*mean(resultados.ProyeccionX_patente).val[0]);//0.8 * resultados.imagPatMod.rows; //ancho del trazo segun el alto de la patente;    //antes usaba 0.25 * (mean(ProyeccionX[0]).val[0]);
+	umbralTipoPatente=resultados.umbralProyXpat;
 
 	int cuenta=0;
 
-	int iInicial=ceil((float)(resultados.ProyeccionX_patente.cols*3/8));
-	int iFinal=ceil((float)(resultados.ProyeccionX_patente.cols*5/8));
-	int anchoMinimo=ceil((float)(resultados.ProyeccionX_patente.cols/12));
+	iInicial=ceil((float)(resultados.ProyeccionX_patente.cols*3/8));
+	iFinal=ceil((float)(resultados.ProyeccionX_patente.cols*5/8));
+	anchoMinimo=ceil((float)(resultados.ProyeccionX_patente.cols/12));
 
 	for (int i = iInicial; i < iFinal; i++) {
 		float pi = resultados.ProyeccionX_patente.at<float>(0, i);				//valor en i
@@ -1127,6 +1115,16 @@ Mat Segmentador::warpPerspective(Mat patente, int dx){
 	dstQuad[2].y = patente.rows;
 	dstQuad[3].x = patente.cols+dx2; //dst Bot right
 	dstQuad[3].y = patente.rows;
+
+
+	if(contRota==0){
+		cvtColor(resultados.imagBordesRotada0,resultados.imagBordesRotada2,CV_GRAY2BGR);
+		line(resultados.imagBordesRotada2,Point(srcQuad[1].x-dx,srcQuad[1].y),Point(srcQuad[3].x-dx,srcQuad[3].y),Scalar(0, 0, 255), 1);
+		line(resultados.imagBordesRotada2,Point(srcQuad[0].x,srcQuad[0].y),Point(srcQuad[2].x,srcQuad[2].y),Scalar(0, 0, 255), 1);
+
+
+	}
+
 
 	warpMatrix =cv::getPerspectiveTransform(srcQuad,dstQuad);
 	cv::warpPerspective(patente,aux,warpMatrix,aux.size(),INTER_LINEAR, BORDER_CONSTANT);

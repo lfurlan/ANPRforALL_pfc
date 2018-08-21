@@ -21,8 +21,9 @@ private:
 	Localizador* loc;
 	Segmentador *seg;
 	Reconocedor *rec;
-	int estadio;
-	//int mostrarPasos;
+	string numeracion;
+	codigoError codEr;
+	int mostrarPasos;
 
 public:
 
@@ -30,7 +31,7 @@ public:
 
 	~ANPR();
 
-	vector<inicio_fin> ejecutar(String nombre,Mat &imgEntrada,Mat &imagenSalida, int mostrar, int cand);
+	void ejecutar(String nombre,Mat &imgEntrada,Mat &imagenSalida, int mostrar, int cand);
 };
 
 #endif /* ANPR_H_ */

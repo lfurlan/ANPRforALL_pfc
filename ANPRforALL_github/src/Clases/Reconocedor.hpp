@@ -30,8 +30,14 @@ class Reconocedor
   public:
 	Reconocedor();
     virtual ~Reconocedor();
-    String ejecutar(Mat imagenEntrada);
+    string ejecutar(Mat imagenEntrada);
 
+    void mostrar_pasos();
+
+  private:
+    Mat imagenEntrada;
+    Mat imagenSalida;
+    string numeracion;
 };
 
 #endif /* RECONOCEDOR_H_ */
