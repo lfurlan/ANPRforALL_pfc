@@ -5,33 +5,14 @@
 #include <iostream>
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-#include <string>
-#include <math.h>
-#include <fstream>
-#include <tesseract\baseapi.h>
-#include <leptonica\allheaders.h>
-#include "../Utils/pdi_functions.h"
 #include "estructuras.hpp"
-
-
-
 
 using namespace cv;
 using namespace std;
-using namespace pdi;
-
-
-
 
 class ResultadosSegmentacion {
 
 public:
-
 	Mat imagPatOrig;
 	Mat imagTopHat;
 	Mat imagBlackHat;
@@ -42,19 +23,14 @@ public:
 	Mat imagSegmentada;
 	vector<caracter> Caracteres;//vector<caracter> Caracteres;
 	Mat imagBinariaSeg;
-
 	Mat imagBinariaSegX;
-
 	Mat imagGrisRotadaSegmY;
-
 	Mat imagBordes;
 	Mat imagBordesHough;
 	Mat imagBordesRotada0;
 	Mat imagBordesRotada;
 	Mat imagBordesRotada2;
-
 	Mat imagBordesRotadaSegY;
-
 	Mat imagPatOrigGris;
 	Mat imagPatEscalada;
 	Mat imagProyY;
@@ -84,17 +60,13 @@ public:
 	promedio mejorpromedioVer;
 	promedio mejorAnchoCaracter;
 	Rect roiSegY;
-
 	ResultadosSegmentacion(){
-
 	};
-
 	virtual ~ResultadosSegmentacion(){};
 };
 
 class Segmentador
 {
-
   public:
 	Segmentador();
     virtual ~Segmentador();
@@ -103,6 +75,11 @@ class Segmentador
 	void mostrar_pasos();
 
   private:
+	int ind_mayor_altoGLOBAL1,ind_mayor_altoGLOBAL2, umbralTipoPatente;
+	int contRota=0;
+	int iInicial;
+	int iFinal;
+	int anchoMinimo;
 	int paso;
 	ResultadosSegmentacion resultados;
 	int ind_mayor_alto;
